@@ -1,0 +1,19 @@
+{
+  "name": "Airflow Dev Container",
+  "dockerComposeFile": ["../docker-compose.yaml"],
+  "service": "airflow-apiserver",
+  "workspaceFolder": "/opt/airflow",
+  "shutdownAction": "stopCompose",
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance"
+  ],
+  "settings": {
+    "python.languageServer": "Pylance",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.extraPaths": ["/opt/airflow/dags"]
+  },
+  "remoteUser": "airflow",
+  "runServices": ["airflow-apiserver", "airflow-scheduler", "airflow-worker"],
+  "overrideCommand": false
+}
