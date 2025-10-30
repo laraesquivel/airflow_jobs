@@ -1,19 +1,145 @@
 {
-  "name": "Airflow Dev Container",
-  "dockerComposeFile": ["../docker-compose.yaml"],
-  "service": "airflow-apiserver",
+  "name": "Airflow + Spark + MinIO Development",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "airflow-webserver",
   "workspaceFolder": "/opt/airflow",
-  "shutdownAction": "stopCompose",
-  "extensions": [
-    "ms-python.python",
-    "ms-python.vscode-pylance"
-  ],
-  "settings": {
-    "python.languageServer": "Pylance",
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.extraPaths": ["/opt/airflow/dags"]
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.isort",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "github.copilot",
+        "donjayamanne.githistory",
+        "mhutchie.git-graph",
+        "mechatroner.rainbow-csv",
+        "davidanson.vscode-markdownlint",
+        "yzhang.markdown-all-in-one",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackPath": "/usr/local/bin/black",
+        "python.analysis.typeCheckingMode": "basic",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 4
+        },
+        "[yaml]": {
+          "editor.defaultFormatter": "redhat.vscode-yaml",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[json]": {
+          "editor.defaultFormatter": "vscode.json-language-features",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true
+        },
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/node_modules/*/**": true,
+          "**/__pycache__/**": true
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "yaml.schemas": {
+          "https://json.schemastore.org/docker-compose.json": "docker-compose*.yml"
+        }
+      }
+    }
   },
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "airflow",
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  
+  "postCreateCommand": "pip install --no-cache-dir apache-airflow-providers-amazon apache-airflow-providers-apache-spark pyspark boto3 s3fs pandas pyarrow black flake8 isort pytest pytest-cov pylint autopep8",
+  
   "remoteUser": "airflow",
-  "runServices": ["airflow-apiserver", "airflow-scheduler", "airflow-worker"],
-  "overrideCommand": false
+  
+  "forwardPorts": [
+    8080,
+    9000,
+    9001,
+    8081,
+    5432,
+    5555
+  ],
+  
+  "portsAttributes": {
+    "8080": {
+      "label": "Airflow UI",
+      "onAutoForward": "notify"
+    },
+    "9000": {
+      "label": "MinIO API",
+      "onAutoForward": "silent"
+    },
+    "9001": {
+      "label": "MinIO Console",
+      "onAutoForward": "notify"
+    },
+    "8081": {
+      "label": "Spark Master UI",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "5555": {
+      "label": "Flower (Celery)",
+      "onAutoForward": "silent"
+    }
+  },
+  
+  "mounts": [
+    "source=${localWorkspaceFolder}/dags,target=/opt/airflow/dags,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/plugins,target=/opt/airflow/plugins,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/data,target=/opt/airflow/data,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/spark-apps,target=/opt/spark-apps,type=bind,consistency=cached"
+  ],
+  
+  "containerEnv": {
+    "AIRFLOW_HOME": "/opt/airflow",
+    "PYTHONPATH": "/opt/airflow",
+    "AWS_ACCESS_KEY_ID": "minioadmin",
+    "AWS_SECRET_ACCESS_KEY": "minioadmin",
+    "MINIO_ENDPOINT": "http://minio:9000",
+    "SPARK_MASTER": "spark://spark-master:7077"
+  }
 }
