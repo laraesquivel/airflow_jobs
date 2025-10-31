@@ -373,15 +373,15 @@ services:
       "
 
   spark-master:
-    image: bitnami/spark:3.5.0
+    image: apache/spark:3.5.1
     container_name: spark-master
     environment:
       - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master
+      --port 7077
+      --webui-port 8080
     ports:
       - "8081:8080"
       - "7077:7077"
@@ -391,25 +391,23 @@ services:
     restart: always
 
   spark-worker:
-    image: bitnami/spark:3.5.0
+    image: apache/spark:3.5.1
     container_name: spark-worker
+    depends_on:
+      - spark-master
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+      - SPARK_WORKER_MEMORY=2g
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
     ports:
       - "8082:8081"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/spark-data
       - ${AIRFLOW_PROJ_DIR:-.}/spark-apps:/opt/spark-apps
-    depends_on:
-      - spark-master
     restart: always
 
 
